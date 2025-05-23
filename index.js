@@ -50,25 +50,4 @@ io.on("connection", (socket) => {
     console.log("User disconnected");
   });
 });
-// io.on('connection', (socket) => {
-//   console.log('A user connected');
 
-//   socket.on('join', (userId) => {
-//     socket.join(userId);
-//     console.log(`User ${userId} joined their room`);
-//   });
-
-//   socket.on('sendMessage', (message) => {
-//     io.to(message.receiver._id).emit('receiveMessage', message);
-//   });
-
-//   socket.on('disconnect', () => {
-//     console.log('A user disconnected');
-//   });
-// });
-
-// const PORT = process.env.PORT || 5000;
-
-// httpServer.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
