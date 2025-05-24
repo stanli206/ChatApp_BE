@@ -34,6 +34,7 @@ app.use("/api/chat", chatRoutes);
 app.listen(port, () => {
   console.log(`server is running on port ${port}`);
 });
+
 // Socket.io connection
 io.on("connection", (socket) => {
   console.log("A user connected");
@@ -43,11 +44,27 @@ io.on("connection", (socket) => {
     console.log(`User ${userId} joined their room`);
   });
 
-  socket.on("sendMessage", (message) => {
-    // Broadcast to both sender and receiver rooms
-    io.to(message.sender._id)
-      .to(message.receiver._id)
-      .emit("receiveMessage", message);
+  socket.on("sendMessage", async (message) => {
+    try {
+      // Save message to database first
+      const newMessage = await Message.create({
+        sender: message.sender._id,
+        receiver: message.receiver._id,
+        message: message.message,
+      });
+
+      // Populate the sender and receiver details
+      const populatedMessage = await Message.findById(newMessage._id)
+        .populate('sender', 'name email')
+        .populate('receiver', 'name email');
+
+      // Emit to both parties
+      io.to(message.sender._id).emit('receiveMessage', populatedMessage);
+      io.to(message.receiver._id).emit('receiveMessage', populatedMessage);
+      
+    } catch (error) {
+      console.error('Error handling message:', error);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -55,25 +72,23 @@ io.on("connection", (socket) => {
   });
 });
 
-// io.on('connection', (socket) => {
-//   console.log('A user connected');
 
-//   socket.on('join', (userId) => {
+// io.on("connection", (socket) => {
+//   console.log("A user connected");
+
+//   socket.on("join", (userId) => {
 //     socket.join(userId);
 //     console.log(`User ${userId} joined their room`);
 //   });
 
-//   socket.on('sendMessage', (message) => {
-//     io.to(message.receiver._id).emit('receiveMessage', message);
+//   socket.on("sendMessage", (message) => {
+//     // Broadcast to both sender and receiver rooms
+//     io.to(message.sender._id)
+//       .to(message.receiver._id)
+//       .emit("receiveMessage", message);
 //   });
 
-//   socket.on('disconnect', () => {
-//     console.log('A user disconnected');
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected");
 //   });
-// });
-
-// const PORT = process.env.PORT || 5000;
-
-// httpServer.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
 // });
